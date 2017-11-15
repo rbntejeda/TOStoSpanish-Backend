@@ -60,6 +60,10 @@ $config = [
         
     ],
     'params' => $params,
+    'aliases' => [
+        '@data' => '@app/data/English/',
+    ],
+
 ];
 
 if (YII_ENV_DEV) {

@@ -35,13 +35,13 @@ class TosBase extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['file_id', 'header', 'body', 'status'], 'required'],
+            [['file_id', 'header'], 'required'],
             [['file_id'], 'integer'],
             [['body', 'status'], 'string'],
             [['creado', 'modificado'], 'safe'],
             [['header'], 'string', 'max' => 30],
-            [['header'], 'unique'],
-            [['file_id'], 'exist', 'skipOnError' => true, 'targetClass' => TosFile::className(), 'targetAttribute' => ['file_id' => 'id']],
+            // [['header'], 'unique'],
+            // [['file_id'], 'exist', 'skipOnError' => true, 'targetClass' => TosFile::className(), 'targetAttribute' => ['file_id' => 'id']],
         ];
     }
 

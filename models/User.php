@@ -2,103 +2,139 @@
 
 namespace app\models;
 
-class User extends \yii\base\Object implements \yii\web\IdentityInterface
+use Yii;
+use \Firebase\JWT\JWT;
+
+class User extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
 {
-    public $id;
-    public $username;
-    public $password;
-    public $authKey;
-    public $accessToken;
 
-    private static $users = [
-        '100' => [
-            'id' => '100',
-            'username' => 'admin',
-            'password' => 'admin',
-            'authKey' => 'test100key',
-            'accessToken' => '100-token',
-        ],
-        '101' => [
-            'id' => '101',
-            'username' => 'demo',
-            'password' => 'demo',
-            'authKey' => 'test101key',
-            'accessToken' => '101-token',
-        ],
-    ];
+    const KEYCODE = "BE3B1BBE87831A6D1A777BD7AAC68";
+
+    public static function tableName()
+    {
+        return 'user';
+    }
+
+    public function rules()
+    {
+        return [
+            [['name', 'username', 'password', 'email'], 'required'],
+            [['creado', 'modificado'], 'safe'],
+            [['name', 'email'], 'string', 'max' => 128],
+            [['username', 'password'], 'string', 'max' => 32],
+            [['username'], 'unique'],
+            [['email'], 'unique'],
+        ];
+    }
+
+    public function attributeLabels()
+    {
+        return [
+            'id' => 'ID',
+            'name' => 'Name',
+            'username' => 'Username',
+            'password' => 'Password',
+            'email' => 'Email',
+            'creado' => 'Creado',
+            'modificado' => 'Modificado',
+        ];
+    }
+
+    public function getTranslates()
+    {
+        return $this->hasMany(TosTranslate::className(), ['user_id' => 'id']);
+    }
+
+    public function getBase()
+    {
+        return $this->hasMany(TosBase::className(), ['id' => 'base_id'])->viaTable('tos_translate', ['user_id' => 'id']);
+    }
+
+    public function getTranslateComents()
+    {
+        return $this->hasMany(TosTranslateComent::className(), ['user_id' => 'id']);
+    }
+
+    public function getLikes()
+    {
+        return $this->hasMany(UserLike::className(), ['user_id' => 'id']);
+    }
+
+    public function getTranslatesLikes()
+    {
+        return $this->hasMany(TosTranslate::className(), ['id' => 'tran_id'])->viaTable('user_like', ['user_id' => 'id']);
+    }
+
+    public static function findIdentityByAccessToken($token,$type = null)
+    {
+        try
+        {
+            $decoded = JWT::decode($token, static::KEYCODE, array('HS256'));
+            return static::findOne($decoded->uid);
+        }
+        catch(yii\UnexpectedValueException $e){}
+        catch(\Firebase\JWT\BeforeValidException $e){}
+        catch(\Firebase\JWT\ExpiredException $e){}
+        catch(\Firebase\JWT\SignatureInvalidException $e){}
+    }
+
+    public function findMultipleMethod($identity,$attributes)
+    {
+        $query=static::find();
+        foreach ($attributes as $attribute)
+        {
+            $query->orWhere([$attribute=>$identity]);
+        }
+        return $query;
+    }
 
 
-    /**
-     * @inheritdoc
-     */
+
     public static function findIdentity($id)
     {
-        return isset(self::$users[$id]) ? new static(self::$users[$id]) : null;
+        return static::findOne($id);
     }
 
-    /**
-     * @inheritdoc
-     */
-    public static function findIdentityByAccessToken($token, $type = null)
-    {
-        foreach (self::$users as $user) {
-            if ($user['accessToken'] === $token) {
-                return new static($user);
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Finds user by username
-     *
-     * @param string $username
-     * @return static|null
-     */
-    public static function findByUsername($username)
-    {
-        foreach (self::$users as $user) {
-            if (strcasecmp($user['username'], $username) === 0) {
-                return new static($user);
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * @inheritdoc
-     */
     public function getId()
     {
-        return $this->id;
+        return $this->primaryKey;
     }
 
-    /**
-     * @inheritdoc
-     */
     public function getAuthKey()
     {
         return $this->authKey;
     }
 
-    /**
-     * @inheritdoc
-     */
     public function validateAuthKey($authKey)
     {
         return $this->authKey === $authKey;
     }
 
-    /**
-     * Validates password
-     *
-     * @param string $password password to validate
-     * @return bool if password provided is valid for current user
-     */
-    public function validatePassword($password)
+    public function validatePassword($pass)
     {
-        return $this->password === $password;
+        return $this->password === $pass;
     }
+
+    public function Token($timeOut = 3600,$type='pwd')
+    {
+        $token = [
+            "uid" => intval($this->primaryKey),
+            "typ" => $type,
+            'sub' => Yii::$app->security->generateRandomString(4),
+            "iat" => time()
+        ];
+        if($timeOut!==-1){
+            $token["exp"]=time()+$timeOut;
+        }
+        return JWT::encode($token, self::KEYCODE);
+    }
+    // public function validatePassword($password)
+    // {
+    //     return Yii::$app->security->validatePassword($password, $this->password);
+    // }
+
+    // public function setPassword($password)
+    // {
+    //     $this->password = Yii::$app->security->generatePasswordHash($password);
+    // }
 }

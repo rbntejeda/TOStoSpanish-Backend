@@ -4,33 +4,36 @@ $params = require __DIR__ . '/params.php';
 $db = require __DIR__ . '/db.php';
 
 $config = [
-    'id' => 'basic',
+    'id' => 'Tree of savior',
+    'language' => 'es',
+    'sourceLanguage' => 'es_CL',
+    'timeZone' => 'America/Santiago',
     'basePath' => dirname(__DIR__),
     'bootstrap' => ['log'],
-    'aliases' => [
-        '@bower' => '@vendor/bower-asset',
-        '@npm'   => '@vendor/npm-asset',
-    ],
     'components' => [
         'request' => [
-            // !!! insert a secret key in the following (if it is empty) - this is required by cookie validation
-            'cookieValidationKey' => 'a3my7PIa0Jac-0papOaX8Di_Ax0fDziA',
+            'cookieValidationKey' => 'yC8juG2gpIhV7Rmlx14cPgy3WdB6u4kX',
+            'enableCsrfCookie'=>false,
+            'enableCsrfValidation' => false,
+            'enableCookieValidation'=>false,            
+            'parsers' => [
+                'application/json' => 'yii\web\JsonParser',
+            ]
         ],
         'cache' => [
             'class' => 'yii\caching\FileCache',
         ],
         'user' => [
             'identityClass' => 'app\models\User',
-            'enableAutoLogin' => true,
+            'enableAutoLogin' => false,
+            'enableSession' => false,
+            'loginUrl' =>'',
         ],
         'errorHandler' => [
             'errorAction' => 'site/error',
         ],
         'mailer' => [
             'class' => 'yii\swiftmailer\Mailer',
-            // send all mails to a file by default. You have to set
-            // 'useFileTransport' to false and configure a transport
-            // for the mailer to send real emails.
             'useFileTransport' => true,
         ],
         'log' => [
@@ -42,15 +45,19 @@ $config = [
                 ],
             ],
         ],
-        'db' => $db,
-        /*
+        'db' => require(__DIR__ . '/db.php'),
+        
         'urlManager' => [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
+            
+            // 'enablePrettyUrl' => true,
+            // 'enableStrictParsing' => true,
+            // 'showScriptName' => false,
             'rules' => [
             ],
         ],
-        */
+        
     ],
     'params' => $params,
 ];
